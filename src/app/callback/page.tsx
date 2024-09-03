@@ -20,48 +20,25 @@ function CallbackPage() {
   const { setKeylessAccount } = useKeylessAccount();
   const { push } = useRouter();
 
-  const [progress, setProgress] = useState<number>(0);
-  const [hasError, setHasError] = useState<boolean>(false);
-
   useEffect(() => {
-    const interval = setInterval(() => {
-      setProgress((currentProgress) => {
-        if (currentProgress >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return currentProgress + 1;
-      });
-    }, 50);
 
     async function deriveAccount() {
       const jwt = parseJWTFromURL(window.location.href);
 
       if (!jwt) {
-        setHasError(true);
-        setProgress(100);
         toast.error("No JWT found in URL. Please try logging in again.");
         return;
       }
-
       const payload = jwtDecode<{ nonce: string }>(jwt);
-
       const jwtNonce = payload.nonce;
-
       const ephemeralKeyPair = getLocalEphemeralKeyPair(jwtNonce);
-
       if (!ephemeralKeyPair) {
-        setHasError(true);
-        setProgress(100);
         toast.error(
           "No ephemeral key pair found for the given nonce. Please try logging in again."
         );
         return;
       }
-
       await createKeylessAccount(jwt, ephemeralKeyPair);
-      clearInterval(interval);
-      setProgress(100);
       push("/");
     }
 
@@ -90,9 +67,7 @@ function CallbackPage() {
         });
       } catch (error) {
         console.log("Error funding account: ", error);
-        toast.error(
-          "Failed to fund account. Please try logging in again or use another account."
-        );
+        
       }
     }
 
@@ -102,14 +77,12 @@ function CallbackPage() {
 
   return (
     <div className="flex items-center justify-center h-screen w-screen">
-      <div className="nes-container is-rounded shadow-md cursor-not-allowed bg-gray-200">
-        <h1>Loading your blockchain account...</h1>
-        <br />
-        <progress
-          className={`nes-progress ${hasError ? "is-error" : "is-primary"}`}
-          value={progress}
-          max="100"
-        ></progress>
+      <div className="relative flex justify-center items-center border rounded-lg px-8 py-2 shadow-sm cursor-not-allowed tracking-wider">
+        <span className="absolute flex h-3 w-3 -top-1 -right-1">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+        </span>
+        Redirecting...
       </div>
     </div>
   );
