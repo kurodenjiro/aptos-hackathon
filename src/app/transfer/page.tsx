@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { getAptosClient } from "@/utils/aptosClient";
 import axios from "axios";
 import { toast } from "sonner";
+import Link from "next/link";
 
 const aptosClient = getAptosClient();
 
@@ -14,6 +15,7 @@ const Transfer = () =>{
     const [balance, setBalance] = useState<number>(0)
     const [amount, setAmount] = useState<string|null>(null)
     const [receive, setReceive] = useState<string|null>(null)
+    const [pending, setPending] = useState<boolean>(false)
     const { keylessAccount } = useKeylessAccount();
 
     useEffect(()=>{
@@ -38,9 +40,11 @@ const Transfer = () =>{
     }
 
     const onTransfer = async() => {
+        setPending(true)
         if(!keylessAccount) return ;
         if(parseFloat(amount as string) > balance) return toast.error("Not enough balance");
         try{
+            toast.loading("Transtraction pending!")
             const transaction = await aptosClient.transferCoinTransaction({
                 sender: keylessAccount?.accountAddress.toString(),
                 recipient: receive!,
@@ -65,6 +69,7 @@ const Transfer = () =>{
                     ),
                 },
             });
+            setPending(false)
         }catch(err){
             console.error("Error",err)
             toast.error("Failed to transfer token. Please try again.");
@@ -85,9 +90,14 @@ const Transfer = () =>{
                         <label htmlFor="amount">Address for receive</label>
                         <input onChange={(e)=>setReceive(e.target.value)} value={receive?receive:""} name="amount" type="text" className="border mt-1 rounded-lg px-3 py-2 shadow-sm w-full" placeholder="Enter address"/>
                     </div>
-                    <button onClick={onTransfer} className="flex mt-4 w-full justify-center items-center border rounded-lg px-8 py-2 hover:bg-gray-100 hover:shadow-sm active:bg-gray-50 active:scale-95 transition-all">
+                    <button onClick={onTransfer} disabled={pending} className="flex mt-4 w-full justify-center items-center border rounded-lg px-8 py-2 hover:bg-gray-100 hover:shadow-sm active:bg-gray-50 active:scale-95 transition-all">
                         <span className="font-semibold text-lg">Transfer</span>
                     </button>
+                    <Link href="/home"
+                    className="flex justify-center bg-red-50 items-center border border-red-200 rounded-lg px-8 py-2 shadow-sm shadow-red-300 hover:bg-red-100 active:scale-95 transition-all"
+                    >
+                    Back home
+                    </Link>
                 </div>
             </div>
         </div>

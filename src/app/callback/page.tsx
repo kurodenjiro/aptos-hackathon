@@ -39,7 +39,7 @@ function CallbackPage() {
         return;
       }
       await createKeylessAccount(jwt, ephemeralKeyPair);
-      push("/");
+      push("/home");
     }
 
     deriveAccount();
