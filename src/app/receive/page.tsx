@@ -19,9 +19,9 @@ const Receive = () =>{
     const [currentIndex, setCurrentIndex] = useState<number>(0)
     const { keylessAccount } = useKeylessAccount();
 
-    if (typeof window !== 'undefined') {
+    useEffect(()=>{
         setCurrentIndex(Number(window?.localStorage?.getItem("indexTab")))
-    }
+    },[])
 
     useEffect(()=>{
         if(!keylessAccount){
@@ -36,7 +36,7 @@ const Receive = () =>{
         if(index != 1) router.push("send")
     }
 
-    console.log(currentIndex)
+    //console.log(currentIndex)
 
     return(
         keylessAccount&&(<div className="flex flex-col h-screen w-screen items-center">
