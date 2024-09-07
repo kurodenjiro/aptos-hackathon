@@ -209,7 +209,7 @@ const Home = () =>{
                             )
                         }
                         {
-                            currentIndex == 3&&(
+                            currentIndex == 2&&(
                                 <Apps/>
                             )
                         }
