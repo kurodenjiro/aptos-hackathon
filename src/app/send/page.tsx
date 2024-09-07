@@ -1,7 +1,7 @@
 'use client'
 
 import { useKeylessAccount } from "@/context/KeylessAccountContext";
-import { useState,useEffect } from "react";
+import { useState,useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getAptosClient } from "@/utils/aptosClient";
 import axios from "axios";
@@ -19,7 +19,9 @@ const Transfer = () =>{
     const [pending, setPending] = useState<boolean>(false)
     const [isShow, setIsShow] = useState<boolean>(false)
     const [currentIndex, setCurrentIndex] = useState<number>(0)
+    const [priceAPT, setPriceAPT] = useState<string|null>(null)
     const { keylessAccount } = useKeylessAccount();
+
 
     useEffect(()=>{
         if(!keylessAccount){
@@ -28,9 +30,10 @@ const Transfer = () =>{
         if(keylessAccount?.accountAddress){
             loadBalance()
         }
+        loadPriceAPT()
     },[keylessAccount])
 
-    const loadBalance = async() => {
+    const loadBalance = useCallback(async() => {
         const options = {
             method: 'GET',
             headers: {accept: 'application/json'}
@@ -40,7 +43,17 @@ const Transfer = () =>{
         const balance = datas?.data?.coin.value
         const formatBalance = parseFloat(balance ? balance : 0)*Math.pow(10,-8)
         setBalance(formatBalance)
-    }
+    },[keylessAccount])
+
+    const loadPriceAPT = useCallback(async()=>{
+        const options = {
+            method: 'GET',
+            headers: {accept: 'application/json'}
+        };
+        const respo = await axios.get(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=aptos`,options)
+        const tokenPrice = respo?.data[0]?.current_price
+        setPriceAPT(tokenPrice)
+    },[priceAPT])
 
     const onTransfer = async() => {
         setPending(true)
@@ -62,7 +75,7 @@ const Transfer = () =>{
             });
             setAmount(null)
             setReceive(null)
-            toast.success("Your pet was successfully minted!", {
+            toast.success("Send Successful!", {
                 action: {
                     label: "Explorer",
                     onClick: () =>
@@ -76,7 +89,15 @@ const Transfer = () =>{
         }catch(err){
             console.error("Error",err)
             toast.error("Failed to transfer token. Please try again.");
+            setPending(false)
         }
+    }
+
+    const onSelectIndex = (index: number) =>{
+        setCurrentIndex(index)
+        localStorage.setItem("indexTab",index.toString())
+        if(index == 1) router.push("receive");
+        if(index != 1) router.push("send")
     }
 
     const tabs = ["Send","Receive"]
@@ -94,19 +115,18 @@ const Transfer = () =>{
                             <div className="flex flex-row px-2 py-1 w-[170px] rounded-sm items-center bg-slate-200 bg-opacity-35 justify-between">
                                 {
                                     tabs.map((tab,index)=>(
-                                        <button onClick={()=>setCurrentIndex(index)} key={index} className={`${index==currentIndex ? "bg-white text-black" : "text-slate-400"} px-3 py-1 rounded-sm`}>{tab}</button>
+                                        <button onClick={()=>onSelectIndex(index)} key={index} className={`${index==currentIndex ? "bg-white text-black" : "text-slate-400"} px-3 py-1 rounded-sm`}>{tab}</button>
                                     ))
                                 }
-                                {/* <span className="text-slate-400 px-3 py-1">Receive</span> */}
                             </div>
                         </div>
                     </div>
                     <div className="flex flex-col mt-16 justify-center items-center">
-                        <input className="w-20 text-center outline-none border-none text-[3rem]" type="text" placeholder="0"/>
-                        <span className="text-[#c4c4c4] mt-1">~ 0.0 USD</span>
+                        <input onChange={(e)=>setAmount(e.target.value)} value={amount?amount:"0"} className="w-44 text-center outline-none border-none text-[3rem]" type="text" placeholder="0"/>
+                        <span className="text-[#c4c4c4] mt-1">~{amount?(parseFloat(amount)*parseFloat(priceAPT as string)).toFixed(2):"0.0"}USD</span>
                         <div className="mt-10 flex flex-col gap-2">
-                            <span className="text-[#c4c4c4]">Available: <strong className="text-black">0.80 APT</strong></span>
-                            <button>
+                            <span className="text-[#c4c4c4]">Available: <strong className="text-black">{balance.toFixed(5)} APT</strong></span>
+                            <button onClick={()=>setAmount(balance.toFixed(5))}>
                                 <span className="underline">Use Max</span>
                             </button>
                         </div>
@@ -137,39 +157,19 @@ const Transfer = () =>{
                         <div className="mt-10 w-full">
                             <div className="flex flex-col text-start">
                                 <span>Send to</span>
-                                <input className="w-full flex flex-row justify-between outline-none hover:border-2 hover:border-gray-500  focus:border-gray-500 items-center border px-3 py-2 border-gray-200 shadow-sm rounded-md h-12  mt-2" placeholder="Receive address"/>            
+                                <input onChange={(e)=>setReceive(e.target.value)} className="w-full flex flex-row justify-between outline-none hover:border-2 hover:border-gray-500  focus:border-gray-500 items-center border px-3 py-2 border-gray-200 shadow-sm rounded-md h-12  mt-2" placeholder="Receive address"/>            
                             </div>
                         </div>
                         <div className="w-full mt-10 flex flex-row justify-between">
-                            <button className="w-[160px] border border-gray-200 shadow-sm px-3 py-2 rounded-md">
+                            <Link href={"/home"} className="w-[160px] text-center border border-gray-200 shadow-sm px-3 py-2 rounded-md">
                                 <span>Cancel</span>
-                            </button>
-                            <button className="w-[160px] bg-black text-white shadow-sm px-3 py-2 rounded-md">
+                            </Link>
+                            <button onClick={onTransfer} disabled={pending} className="w-[160px] bg-black text-white shadow-sm px-3 py-2 rounded-md">
                                 <span>Send</span>
                             </button>
                         </div>
                     </div>
                 </div>
-                {/* <h1 className="text-4xl font-bold mb-2">Tranfer Token!</h1>
-                <p className="text-lg mb-8">Example transfer token using aptos keyless</p>
-                <div className="mt-5 flex flex-col gap-3">
-                    <div>
-                        <label htmlFor="amount">Amount</label>
-                        <input onChange={(e)=>setAmount(e.target.value)} value={amount?amount:""} name="amount" type="text" className="border mt-1 rounded-lg px-3 py-2 shadow-sm w-full" placeholder="Enter amount"/>
-                    </div>
-                    <div className="mt-3">
-                        <label htmlFor="amount">Address for receive</label>
-                        <input onChange={(e)=>setReceive(e.target.value)} value={receive?receive:""} name="amount" type="text" className="border mt-1 rounded-lg px-3 py-2 shadow-sm w-full" placeholder="Enter address"/>
-                    </div>
-                    <button onClick={onTransfer} disabled={pending} className="flex mt-4 w-full justify-center items-center border rounded-lg px-8 py-2 hover:bg-gray-100 hover:shadow-sm active:bg-gray-50 active:scale-95 transition-all">
-                        <span className="font-semibold text-lg">Transfer</span>
-                    </button>
-                    <Link href="/home"
-                    className="flex justify-center bg-red-50 items-center border border-red-200 rounded-lg px-8 py-2 shadow-sm shadow-red-300 hover:bg-red-100 active:scale-95 transition-all"
-                    >
-                    Back home
-                    </Link>
-                </div> */}
             </div>
         </div>
     )

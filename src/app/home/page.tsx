@@ -2,20 +2,21 @@
 
 import GoogleLogo from "@/components/GoogleLogo";
 import { useKeylessAccount } from "@/context/KeylessAccountContext";
-import { collapseAddress } from "@/utils/address";
-import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import axios from "axios";
 import Header from "@/components/Header";
+import { useGetNFTInBalance } from "@/hooks/useQuery";
 
 
 const Home = () =>{
     const router = useRouter()
     const [balance, setBalance] = useState<string|null>(null)
     const [currentIndex, setCurrentIndex] = useState<number>(0)
-    const { keylessAccount, setKeylessAccount } = useKeylessAccount();
+    const [priceAPT, setPriceAPT] = useState<string|null>(null)
+    const { keylessAccount } = useKeylessAccount();
+    const {fetchNFTs, NFTs} = useGetNFTInBalance()
 
     useEffect(()=>{
         if(!keylessAccount){
@@ -23,8 +24,12 @@ const Home = () =>{
         }
         if(keylessAccount?.accountAddress){
             loadBalance()
+            loadPriceAPT()
+            fetchNFTs()
         }
     },[keylessAccount])
+
+    //console.log(NFTs)
 
     if(!keylessAccount){
         return(
@@ -43,7 +48,7 @@ const Home = () =>{
         )
     }
 
-    const loadBalance = async() => {
+    const loadBalance = useCallback(async() => {
         const options = {
             method: 'GET',
             headers: {accept: 'application/json'}
@@ -53,12 +58,17 @@ const Home = () =>{
         const balance = datas?.data?.coin.value
         const formatBalance = Number(balance ? balance : 0)*Math.pow(10,-8)
         setBalance(formatBalance.toFixed(2))
-    }
+    },[keylessAccount])
 
-    const disconnect = () => {
-        setKeylessAccount(null);
-        toast.success("Successfully disconnected account");
-    };
+    const loadPriceAPT = useCallback(async()=>{
+        const options = {
+            method: 'GET',
+            headers: {accept: 'application/json'}
+        };
+        const respo = await axios.get(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=aptos`,options)
+        const tokenPrice = respo?.data[0]?.current_price
+        setPriceAPT(tokenPrice)
+    },[priceAPT])
 
     const tabs = ["Home","NFTs","AI","Apps"]
 
@@ -89,9 +99,9 @@ const Home = () =>{
                                         <Link href={"/send"} className="w-[260px] text-center bg-gray-200 bg-opacity-70 rounded-md p-3 ">
                                             <span>Send</span>
                                         </Link>
-                                        <button className="w-[260px] bg-gray-200 bg-opacity-70 rounded-md p-3 ">
+                                        <Link href={"/receive"} className="w-[260px] text-center bg-gray-200 bg-opacity-70 rounded-md p-3 ">
                                             <span>Receive</span>
-                                        </button>
+                                        </Link>
                                     </div>
                                     <div className="mt-7 w-full">
                                         <span className="text-lg">Token</span>
@@ -101,10 +111,30 @@ const Home = () =>{
                                                     <img width={40} src="/assets/icon.png" alt="icon" />
                                                     <span className="font-semibold text-xl">APTOS</span>
                                                 </div>
-                                                <span className="font-semibold text-xl">{balance}</span>
+                                                <div className="flex flex-col gap-2 text-center">
+                                                    <span className="font-semibold text-xl">{balance}</span>
+                                                    <span className="text-sm text-[#bdbdbd]">~ {priceAPT||balance? (parseFloat(balance as string)*parseFloat(priceAPT as string)).toFixed(2):"0.0"} USD</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                            )
+                        }
+                        {
+                            currentIndex ==1 &&(
+                                <div className="flex flex-col justify-center text-start items-center">
+                                    {
+                                        NFTs?.current_token_ownerships_v2.length > 0?(
+                                            <div>
+
+                                            </div>
+                                        ):(
+                                            <div className="text-start flex justify-start items-start">
+                                                <span>Nothing!</span>
+                                            </div>
+                                        )
+                                    }
                                 </div>
                             )
                         }

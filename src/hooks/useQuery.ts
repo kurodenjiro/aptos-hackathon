@@ -1,7 +1,7 @@
 import { getAptosClient } from "@/utils/aptosClient";
 import { useKeylessAccount } from "@/context/KeylessAccountContext";
 import { useCallback, useState } from "react";
-import { queryTokenBalance } from "@/graphql/queryTokenInBalance";
+import { queryNFTInBalance, queryTokenBalance } from "@/graphql/query";
 
 const aptosClient = getAptosClient()
 
@@ -51,5 +51,34 @@ export const useGetTokenInBalance = () =>{
     return {
         fetchToken,
         tokens
+    }
+}
+
+export const useGetNFTInBalance = () =>{
+    const {keylessAccount} = useKeylessAccount();
+    const [loading, setLoading] = useState<boolean>(false)
+    const [NFTs, setNFTs] = useState<any>([])
+    const fetchNFTs = useCallback(async() =>{
+        if(!keylessAccount) return ;
+        try{
+            setLoading(true);
+            const tokens =
+                await aptosClient.queryIndexer({
+                query: {
+                    query: queryNFTInBalance,
+                    variables: {
+                        address: keylessAccount?.accountAddress.toString(),
+                    },              
+                },
+            });
+            console.log(tokens)
+            setNFTs(tokens)
+        }catch(err){
+            console.log("err fetch")
+        }
+    },[keylessAccount])
+    return {
+        fetchNFTs,
+        NFTs
     }
 }
