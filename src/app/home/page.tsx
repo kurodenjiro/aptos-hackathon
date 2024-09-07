@@ -8,6 +8,7 @@ import Link from "next/link";
 import axios from "axios";
 import Header from "@/components/Header";
 import { useGetNFTInBalance } from "@/hooks/useQuery";
+import Apps from "@/components/Apps";
 
 
 const Home = () =>{
@@ -131,11 +132,16 @@ const Home = () =>{
                                             </div>
                                         ):(
                                             <div className="text-start flex justify-start items-start">
-                                                <span>Nothing!</span>
+                                                <span>Looks like you don't have any NFTs yet!</span>
                                             </div>
                                         )
                                     }
                                 </div>
+                            )
+                        }
+                        {
+                            currentIndex == 3&&(
+                                <Apps/>
                             )
                         }
                     </div>

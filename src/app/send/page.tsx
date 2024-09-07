@@ -107,7 +107,7 @@ const Transfer = () =>{
             <Header/>
             <div className="w-screen flex justify-center flex-col items-center mt-10">
                 <div className="max-w-sm w-full">
-                    <div className="flex flex-row w-full max-w-sm items-center">
+                    <div className="flex flex-row w-full max-w-md items-center">
                         <Link href={"/home"} className="p-2 flex items-center h-8 rounded-md border border-gray-200 shadow-sm">
                             <img width={20} src="/assets/arrow-left.svg" alt="icon" />
                         </Link>
