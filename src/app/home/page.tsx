@@ -15,7 +15,9 @@ const Home = () =>{
     const router = useRouter()
     const [balance, setBalance] = useState<string|null>(null)
     const [currentIndex, setCurrentIndex] = useState<number>(0)
-    const [priceAPT, setPriceAPT] = useState<string|null>(null)
+    const [priceAPT, setPriceAPT] = useState<string|null>("5.7")
+    const [isShow,setIsShow] = useState<boolean>(false)
+    const [loading, setLoading] = useState<boolean>(false)
     const { keylessAccount } = useKeylessAccount();
     const {fetchNFTs, NFTs} = useGetNFTInBalance()
 
@@ -25,7 +27,6 @@ const Home = () =>{
         }
         if(keylessAccount?.accountAddress){
             loadBalance()
-            loadPriceAPT()
             fetchNFTs()
         }
     },[keylessAccount])
@@ -62,17 +63,39 @@ const Home = () =>{
     },[keylessAccount])
 
     const loadPriceAPT = useCallback(async()=>{
-        const options = {
-            method: 'GET',
-            headers: {accept: 'application/json'}
-        };
-        const respo = await axios.get(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=aptos`,options)
-        const tokenPrice = respo?.data[0]?.current_price
-        setPriceAPT(tokenPrice)
+        try{
+            const options = {
+                method: 'GET',
+                headers: {accept: 'application/json',"Access-Control-Allow-Origin":"*"}
+            };
+            const respo = await axios.get(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=aptos`,options)
+            const tokenPrice = respo?.data[0]?.current_price
+            setPriceAPT(tokenPrice)
+        }catch(err){
+            console.log("fetch coin api")
+        }
     },[priceAPT])
 
-    const tabs = ["Home","NFTs","AI","Apps"]
+    const tabs = ["Home","NFTs","Apps"]
+    const actons = [
+        {
+            title: "Batch Mint NFTs",
+            description: "Scale your art"
+        },
+        {
+            title: "Create a Token Drop",
+            description: "craft an image"
+        },
+        {
+            title: "Wallet Overview",
+            description: "summarize current address"
+        }
+    ]
 
+    const onSetMessage = () =>{
+        setLoading(true)
+        router.push("/smart-actions/aaa")
+    }
 
     return(
         keylessAccount
@@ -86,6 +109,9 @@ const Home = () =>{
                                 <span className="text-sm">{tab}</span>
                             </button>
                         ))}
+                        <button onClick={()=>setIsShow(true)} className={`p-3 rounded-md bg-opacity-30 w-20 hover:bg-gray-100`}>
+                            <span className="text-sm">AI</span>
+                        </button>
                     </div>
                     <div className="flex flex-col mt-5 w-full items-center">
                         {
@@ -136,6 +162,49 @@ const Home = () =>{
                                             </div>
                                         )
                                     }
+                                </div>
+                            )
+                        }
+                        {
+                            isShow&&(
+                                <div className="fixed flex justify-center items-center z-20 w-full h-screen top-0 left-0 bg-black bg-opacity-60">
+                                    <div className="max-w-4xl w-full h-2/4 bg-white rounded-md p-3 transition-all">
+                                        <div className="flex flex-row justify-end items-end w-full">
+                                            <button onClick={()=>setIsShow(false)} className="border border-gray-300 shadow-sm p-1 rounded-md">
+                                                <img width={18} src="/assets/close.svg" alt="icon" />
+                                            </button>
+                                        </div>
+                                        <div className="mt-1 flex justify-center w-full items-center flex-col">
+                                            <img width={120} className="opacity-60" src="/assets/star.png" alt="star" />
+                                            <span className="font-semibold text-xl -mt-5">Execute Transactions with AI</span>
+                                        </div>
+                                        <div className="flex flex-row mt-10 flex-wrap justify-between items-center px-3">
+                                            {
+                                                actons.map((dt,idx)=>(
+                                                    <button onClick={onSetMessage} key={idx} className="flex flex-col gap-2 bg-gray-100 bg-opacity-60 rounded-md p-3 w-52">
+                                                        <span>{dt.title}</span>
+                                                        <span className="text-[#9b9a9a] text-sm">{dt.description}</span>
+                                                    </button>
+                                                ))
+                                            }
+                                            <button className="p-3 rounded-md bg-gray-100">
+                                                <img width={25} src="/assets/reload.svg" alt="icon" />
+                                            </button>
+                                        </div>
+                                        <div className="mt-5">
+                                            <textarea className="h-20 border border-gray-300 shadow-sm rounded-md w-full p-2 outline-none focus:border-gray-600 focus:border-2" placeholder="Message Smart Actions"></textarea>
+                                        </div>
+                                        <div className="mt-5 flex justify-end">
+                                            <button disabled={loading} className="p-2 bg-black rounded-md w-[200px] hover:bg-opacity-80 disabled:bg-gray-400">
+                                                <span className="text-white">{loading ? (
+                                                    <div className="flex flex-row gap-3 justify-center items-center">
+                                                        <img width={20} src="/assets/reload-animation.svg" alt="icon" />
+                                                        <span>Please wait</span>
+                                                    </div>
+                                                ) : "Send Message"}</span>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             )
                         }

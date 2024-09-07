@@ -16,8 +16,12 @@ const aptosClient = getAptosClient();
 
 const Receive = () =>{
     const router = useRouter()
-    const [currentIndex, setCurrentIndex] = useState<number>(Number(localStorage.getItem("indexTab"))??0)
+    const [currentIndex, setCurrentIndex] = useState<number>(0)
     const { keylessAccount } = useKeylessAccount();
+
+    if (typeof window !== 'undefined') {
+        setCurrentIndex(Number(window?.localStorage?.getItem("indexTab")))
+    }
 
     useEffect(()=>{
         if(!keylessAccount){
@@ -35,7 +39,7 @@ const Receive = () =>{
     console.log(currentIndex)
 
     return(
-        <div className="flex flex-col h-screen w-screen items-center">
+        keylessAccount&&(<div className="flex flex-col h-screen w-screen items-center">
             <Header/>
             <div className="w-screen flex justify-center flex-col items-center mt-10">
                 <div className="max-w-sm w-full">
@@ -76,7 +80,7 @@ const Receive = () =>{
                     </div>
                 </div>
             </div>
-        </div>
+        </div>)
     )
 }
 

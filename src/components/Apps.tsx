@@ -14,7 +14,12 @@ const Apps = () =>{
                     </button>
                 </div>
                 <div className="mt-5 border border-gray-300 rounded-md p-3 w-full flex flex-row gap-4">
-                    <input className="border border-gray-300 rounded-md outline-none p-2 w-full" placeholder="Message smart actions"/>
+                    <input onKeyUp={(e)=>{
+                                    if(e.key == "Enter"){
+                                        console.log("enter")
+                                    }
+                                }} 
+                    className="border border-gray-300 rounded-md outline-none p-2 w-full" placeholder="Message smart actions"/>
                     <button className="p-3 rounded-full border border-gray-300 shadow-sm hover:bg-gray-100">
                         <img width={20} src="/assets/arrow-up.svg" alt="icon" />
                     </button>
